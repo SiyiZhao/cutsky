@@ -1,0 +1,3 @@
+[submodule "prand"]
+	path = prand
+	url = https://github.com/cheng-zhao/prand.git
