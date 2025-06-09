@@ -558,7 +558,7 @@ static int process_serial(const CONF *conf, const ZCVT *zcvt, const GEOM *geom)
   if (conf->fnz && conf->ndata != DEFAULT_NDATA) {
     if (fabs((double) conf->ndata - nbox) >
         (double) nbox * CUTSKY_NDATA_MISMATCH) {
-      P_WRN("mismatched number of objects: %zu from the configuration, "
+      P_WRN("mismatched number of objects: %ld from the configuration, "
           "while %zu in the catalog\n"
           "Using the number in the configuration anyway\n",
           conf->ndata, nbox);

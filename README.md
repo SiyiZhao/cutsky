@@ -5,10 +5,10 @@
 
 ## Table of Contents
 
--   [Introduction](#introduction)
--   [Compilation](#compilation)
--   [Running](#running)
--   [References](#references)
+- [Introduction](#introduction)
+- [Compilation](#compilation)
+- [Running](#running)
+- [References](#references)
 
 ## Introduction
 
