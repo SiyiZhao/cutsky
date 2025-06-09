@@ -39,12 +39,12 @@ RES=$2          # 7 for DESI
 # Mangle package available at https://space.mit.edu/~molly/mangle/download/
 MANGLE_BIN=$HOME/mangle2.2/bin
 
-$MANGLE_BIN/pixelize -vn -p+40 -Ps0,${RES} -ic1d -opd "$IFILE" "${IFILE}.pix${RES}.ply" || exit
+"$MANGLE_BIN"/pixelize -vn -p+40 -Ps0,${RES} -ic1d -opd "$IFILE" "${IFILE}.pix${RES}.ply" || exit
 
-$MANGLE_BIN/snap -vn -p+40 -ipd -opd "${IFILE}.pix${RES}.ply" "${IFILE}.snap${RES}.ply" || exit
+"$MANGLE_BIN"/snap -vn -p+40 -ipd -opd "${IFILE}.pix${RES}.ply" "${IFILE}.snap${RES}.ply" || exit
 
-$MANGLE_BIN/balkanize -p+40 -Bl -ipd -opd "${IFILE}.snap${RES}.ply" "${IFILE}.balk${RES}.ply" || exit
+"$MANGLE_BIN"/balkanize -p+40 -Bl -ipd -opd "${IFILE}.snap${RES}.ply" "${IFILE}.balk${RES}.ply" || exit
 
-$MANGLE_BIN/unify -p+40 -ipd -opd "${IFILE}.balk${RES}.ply" "${IFILE}_final_res${RES}.ply" || exit
+"$MANGLE_BIN"/unify -p+40 -ipd -opd "${IFILE}.balk${RES}.ply" "${IFILE}_final_res${RES}.ply" || exit
 
 rm "${IFILE}.pix${RES}.ply" "${IFILE}.snap${RES}.ply" "${IFILE}.balk${RES}.ply"
