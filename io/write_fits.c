@@ -40,11 +40,10 @@ OFFILE *ofits_init(void) {
   }
 
   ofile->fp = NULL;
-  ofile->data = ofile->nulval = NULL;
-  ofile->cnum = NULL;
-  ofile->dtypes = NULL;
+  ofile->data = NULL;
+  ofile->dtypes = ofile->dsizes = NULL;
   ofile->ncol = 0;
-  ofile->nrow = 0;
+  ofile->nrow = ofile->nsave = 0;
 
   return ofile;
 }
@@ -73,8 +72,7 @@ void ofits_destroy(OFFILE *ofile) {
     }
     free(ofile->data);
   }
-  if (ofile->nulval) free(ofile->nulval);
-  if (ofile->cnum) free(ofile->cnum);
+  if (ofile->dsizes) free(ofile->dsizes);
   free(ofile);
 }
 
@@ -149,13 +147,9 @@ int ofits_newfile(OFFILE *ofile, const char *fname, const int ncol,
       free(ofile->data);
       ofile->data = NULL;
     }
-    if (ofile->nulval) {
-      free(ofile->nulval);
-      ofile->nulval = NULL;
-    }
-    if (ofile->cnum) {
-      free(ofile->cnum);
-      ofile->cnum = NULL;
+    if (ofile->dsizes) {
+      free(ofile->dsizes);
+      ofile->dsizes = NULL;
     }
   }
 
@@ -171,26 +165,38 @@ int ofits_newfile(OFFILE *ofile, const char *fname, const int ncol,
     P_ERR("failed to allocate memory for FITS columns\n");
     return CUTSKY_ERR_MEMORY;
   }
+  int *dsizes = malloc(ncol * sizeof(int));
+  if (!dsizes) {
+    P_ERR("failed to allocate memory for FITS columns\n");
+    free(cfmt);
+    return CUTSKY_ERR_MEMORY;
+  }
 
   for (int i = 0; i < ncol; i++) {
     switch (dtypes[i]) {
       case TFLOAT:
         cfmt[i] = "1E";
+        dsizes[i] = sizeof(float);
         break;
       case TDOUBLE:
         cfmt[i] = "1D";
+        dsizes[i] = sizeof(double);
         break;
       case TBYTE:
         cfmt[i] = "1B";
+        dsizes[i] = sizeof(uint8_t);
         break;
       case TUSHORT:
         cfmt[i] = "1I";
+        dsizes[i] = sizeof(uint16_t);
         break;
       case TINT32BIT:
         cfmt[i] = "1J";
+        dsizes[i] = sizeof(uint32_t);
         break;
       case TULONGLONG:
         cfmt[i] = "1K";
+        dsizes[i] = sizeof(uint64_t);
         break;
     }
   }
@@ -198,7 +204,7 @@ int ofits_newfile(OFFILE *ofile, const char *fname, const int ncol,
   if (fits_create_tbl(ofile->fp, BINARY_TBL, 0, ncol, names, cfmt, units, NULL,
       &status)) {
     FITS_ERROR;
-    free(cfmt);
+    free(cfmt); free(dsizes);
     return CUTSKY_ERR_FILE;
   }
   free(cfmt);
@@ -206,10 +212,12 @@ int ofits_newfile(OFFILE *ofile, const char *fname, const int ncol,
   /* Get the optimal chunk size for FITS file writing. */
   if (fits_get_rowsize(ofile->fp, &ofile->nrow, &status)) {
     FITS_ERROR;
+    free(dsizes);
     return CUTSKY_ERR_FILE;
   }
   if (ofile->nrow <= 0) {
     P_ERR("failed to determine the chunk size for FITS file writing\n");
+    free(dsizes);
     return CUTSKY_ERR_FILE;
   }
 
@@ -219,30 +227,8 @@ int ofits_newfile(OFFILE *ofile, const char *fname, const int ncol,
     P_ERR("failed to allocate memory for FITS file writing\n");
     return CUTSKY_ERR_MEMORY;
   }
-  for (int i = 0; i < ncol; i++) data[i] = NULL;
   for (int i = 0; i < ncol; i++) {
-    switch (dtypes[i]) {
-      case TFLOAT:
-        data[i] = malloc(ofile->nrow * sizeof(float));
-        break;
-      case TDOUBLE:
-        data[i] = malloc(ofile->nrow * sizeof(double));
-        break;
-      case TBYTE:
-        data[i] = malloc(ofile->nrow * sizeof(uint8_t));
-        break;
-      case TUSHORT:
-        data[i] = malloc(ofile->nrow * sizeof(uint16_t));
-        break;
-      case TINT32BIT:
-        data[i] = malloc(ofile->nrow * sizeof(uint32_t));
-        break;
-      case TULONGLONG:
-        data[i] = malloc(ofile->nrow * sizeof(uint64_t));
-        break;
-    }
-
-    if (!data[i]) {
+    if (!(data[i] = malloc(ofile->nrow * dsizes[i]))) {
       P_ERR("failed to allocate memory for FITS file writing\n");
       for (int j = 0; j < i; j++) {
         if (data[j]) free(data[j]);
@@ -255,17 +241,8 @@ int ofits_newfile(OFFILE *ofile, const char *fname, const int ncol,
   ofile->data = data;
   ofile->ncol = ncol;
   ofile->dtypes = dtypes;
+  ofile->dsizes = dsizes;
   ofile->ndata = 0;
-
-  if (!(ofile->nulval = malloc(ncol * sizeof(void *))) ||
-      !(ofile->cnum = malloc(ncol * sizeof(int)))) {
-    P_ERR("failed to allocate memory for FITS file writing\n");
-    return CUTSKY_ERR_MEMORY;
-  }
-  for (int i = 0; i < ncol; i++) {
-    ofile->nulval[i] = NULL;
-    ofile->cnum[i] = i + 1;
-  }
 
   return 0;
 }
@@ -283,7 +260,7 @@ int ofits_flush(OFFILE *ofile) {
     P_ERR("the interface for FITS file writing is not initialized\n");
     return CUTSKY_ERR_ARG;
   }
-  if (!ofile->fp || !ofile->data || !ofile->nulval || !ofile->dtypes ||
+  if (!ofile->fp || !ofile->data || !ofile->dtypes ||
       ofile->ncol <= 0 || ofile->nrow <= 0) {
     P_ERR("the interface for FITS file writing is not initialized correctly\n");
     return CUTSKY_ERR_ARG;
@@ -292,10 +269,16 @@ int ofits_flush(OFFILE *ofile) {
   if (!ofile->ndata) return 0;
 
   int status = 0;
-  if (fits_write_cols(ofile->fp, ofile->ncol, ofile->dtypes, ofile->cnum,
-      1, ofile->ndata, ofile->data, ofile->nulval, &status)) {
-    FITS_ERROR;
-    return CUTSKY_ERR_FILE;
+  for (long n = 0; n < ofile->ndata; n++) {
+    ofile->nsave++;
+    for (int i = 0; i < ofile->ncol; i++) {
+      char *data = ((char *) ofile->data[i]) + n * ofile->dsizes[i];
+      if (fits_write_col(ofile->fp, ofile->dtypes[i], i + 1, ofile->nsave,
+          1, 1, data, &status)) {
+        FITS_ERROR;
+        return CUTSKY_ERR_FILE;
+      }
+    }
   }
 
   ofile->ndata = 0;
@@ -316,7 +299,7 @@ int ofits_writeline(OFFILE *ofile, ...) {
     P_ERR("the interface for FITS file writing is not initialized\n");
     return CUTSKY_ERR_ARG;
   }
-  if (!ofile->fp || !ofile->data || !ofile->nulval || !ofile->dtypes ||
+  if (!ofile->fp || !ofile->data || !ofile->dtypes ||
       ofile->ncol <= 0 || ofile->nrow <= 0) {
     P_ERR("the interface for FITS file writing is not initialized correctly\n");
     return CUTSKY_ERR_ARG;

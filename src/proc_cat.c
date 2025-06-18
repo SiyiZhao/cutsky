@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <math.h>
+#include <string.h>
 
 #ifdef OMP
 
@@ -363,9 +364,22 @@ static int cutsky_save(const char *fname, const CUTSKY_FFMT fmt,
   }
   else {                                        /* FITS file */
 
+    /* Allocate memory for the filename. */
+    const size_t len = strlen(fname) + 1;
+    char *fitsname = malloc(len + 1);
+    if (!fitsname) {
+      P_ERR("failed to allocate memory for catalog writing\n");
+      return CUTSKY_ERR_MEMORY;
+    }
+    fitsname[0] = '!';
+    strncpy(fitsname + 1, fname, len);
+
     /* Open the output file for writing. */
     OFFILE *ofile = ofits_init();
-    if (!ofile) return CUTSKY_ERR_FILE;
+    if (!ofile) {
+      free(fitsname);
+      return CUTSKY_ERR_FILE;
+    }
 
     /* Setup columns. */
     if (!data[0]->status && !data[0]->nz) {     /* no bitcode and nz */
@@ -374,13 +388,18 @@ static int cutsky_save(const char *fname, const CUTSKY_FFMT fmt,
       char *units[] = {"deg", "deg", NULL, NULL};
       int dtypes[] = {TFLOAT, TFLOAT, TFLOAT, TFLOAT};
 
-      if (ofits_newfile(ofile, fname, ncol, names, units, dtypes))
+      if (ofits_newfile(ofile, fitsname, ncol, names, units, dtypes)) {
+        free(fitsname);
         return CUTSKY_ERR_FILE;
+      }
 
       for (int i = 0; i < ncat; i++) {
         for (size_t j = 0; j < data[i]->n; j++) {
           if (ofits_writeline(ofile, data[i]->x[0][j], data[i]->x[1][j],
-              data[i]->x[2][j], data[i]->x[3][j])) return CUTSKY_ERR_FILE;
+              data[i]->x[2][j], data[i]->x[3][j])) {
+            free(fitsname);
+            return CUTSKY_ERR_FILE;
+          }
         }
       }
     }
@@ -390,14 +409,18 @@ static int cutsky_save(const char *fname, const CUTSKY_FFMT fmt,
       char *units[] = {"deg", "deg", NULL, NULL, NULL};
       int dtypes[] = {TFLOAT, TFLOAT, TFLOAT, TFLOAT, TBYTE};
 
-      if (ofits_newfile(ofile, fname, ncol, names, units, dtypes))
+      if (ofits_newfile(ofile, fitsname, ncol, names, units, dtypes)) {
+        free(fitsname);
         return CUTSKY_ERR_FILE;
+      }
 
       for (int i = 0; i < ncat; i++) {
         for (size_t j = 0; j < data[i]->n; j++) {
           if (ofits_writeline(ofile, data[i]->x[0][j], data[i]->x[1][j],
-              data[i]->x[2][j], data[i]->x[3][j], data[i]->status[j]))
+              data[i]->x[2][j], data[i]->x[3][j], data[i]->status[j])) {
+            free(fitsname);
             return CUTSKY_ERR_FILE;
+          }
         }
       }
     }
@@ -408,19 +431,24 @@ static int cutsky_save(const char *fname, const CUTSKY_FFMT fmt,
       char *units[] = {"deg", "deg", NULL, NULL, NULL, NULL, NULL};
       int dtypes[] = {TFLOAT, TFLOAT, TFLOAT, TFLOAT, TFLOAT, TBYTE, TFLOAT};
 
-      if (ofits_newfile(ofile, fname, ncol, names, units, dtypes))
+      if (ofits_newfile(ofile, fitsname, ncol, names, units, dtypes)) {
+        free(fitsname);
         return CUTSKY_ERR_FILE;
+      }
 
       for (int i = 0; i < ncat; i++) {
         for (size_t j = 0; j < data[i]->n; j++) {
           if (ofits_writeline(ofile, data[i]->x[0][j], data[i]->x[1][j],
               data[i]->x[2][j], data[i]->x[3][j], data[i]->nz[j],
-              data[i]->status[j], data[i]->ran[j]))
+              data[i]->status[j], data[i]->ran[j])) {
+            free(fitsname);
             return CUTSKY_ERR_FILE;
+          }
         }
       }
     }
 
+    free(fitsname);
     /* Close file. */
     ofits_destroy(ofile);
 

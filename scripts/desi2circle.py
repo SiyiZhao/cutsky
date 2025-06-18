@@ -51,7 +51,9 @@ except:
   exit(1)
 
 tiles = Table.read(ftiles[idx])
-if idx == 0: tiles = tiles[(tiles['PROGRAM'] != 'BACKUP') & tiles['IN_DESI']]
+if idx == 0:
+  sel = (tiles['PROGRAM'] != 'BACKUP') & tiles['IN_DESI'] & (tiles['DEC'] > -18)
+  tiles = tiles[sel]
 
 tiles['RADIUS'] = np.full_like(tiles, get_tile_radius_deg())
 

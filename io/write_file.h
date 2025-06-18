@@ -54,12 +54,12 @@ typedef struct {
 typedef struct {
   fitsfile *fp;         /* pointer to the FITS file stream            */
   void **data;          /* buffer for writing the data table          */
-  void **nulval;        /* array for null values                      */
-  int *cnum;            /* indices of columns                         */
   int *dtypes;          /* data types of table columns                */
+  int *dsizes;          /* sizes of table columns in bytes            */
   int ncol;             /* number of columns                          */
   long nrow;            /* optimal number of rows written at once     */
   long ndata;           /* number of rows stored in the buffer        */
+  long nsave;           /* number of rows that are already saved      */
 } OFFILE;
 
 #endif
