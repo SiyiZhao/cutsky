@@ -41,7 +41,7 @@ This software is written by Cheng Zhao (&#36213;&#25104;), and is distributed un
 
 The build process of `cutsky` is based on the `make` utility. Compilation options can be customised in the [`options.mk`](options.mk) file, including the flag to enable FITS-format support.
 
-If FITS support is enabled, `cutsky` requires `cfitsio` version 4.2 or later. If it is installed in a non-standard location, please specify the path via the `CFITSIO_DIR` entry in [`options.mk`](options.mk#L10). The compiler will then look for `fitsio.h` in `CFITSIO_DIR/include`, and the library file (`libcfitsio.so`, `libcfitsio.a`, or `libcfitsio.dylib`) in `CFITSIO_DIR/lib`.
+If FITS support is enabled, `cutsky` requires the [`cfitsio` library](https://github.com/HEASARC/cfitsio). If it is installed in a non-standard location, please specify the path via the `CFITSIO_DIR` entry in [`options.mk`](options.mk#L10). The compiler will then look for `fitsio.h` in `CFITSIO_DIR/include`, and the library file (`libcfitsio.so`, `libcfitsio.a`, or `libcfitsio.dylib`) in `CFITSIO_DIR/lib`.
 
 Once configured, compile the program with:
 
