@@ -107,8 +107,8 @@ typedef enum {
 #define DESI_NGC_RA_MIN         90
 #define DESI_NGC_RA_MAX         300
 /* Rotation parameters for DESI volume. */
-#define DESI_NGC_RA_SHIFT       60
-#define DESI_SGC_RA_SHIFT       60
+#define DESI_NGC_RA_SHIFT       65
+#define DESI_SGC_RA_SHIFT       65
 
 /* Threshold for throwing the warning of data number mismatch. */
 #define CUTSKY_NDATA_MISMATCH   0.1
