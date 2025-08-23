@@ -472,7 +472,7 @@ static int process_serial(const CONF *conf, const ZCVT *zcvt, const GEOM *geom)
 {
   /* Process NGC and SGC individually. */
   DATA *data[2] = {NULL, NULL};
-  const double ra_shift[2] = {60, 60};
+  const double ra_shift[2] = {DESI_NGC_RA_SHIFT, DESI_SGC_RA_SHIFT};
   bool is_ngc[2] = {false, false};
 
   for (int i = 0; i < conf->ncap; i++) {
@@ -700,7 +700,7 @@ static int process_omp(const CONF *conf, const ZCVT *zcvt, const GEOM *geom) {
   /* Allocate memory for NGC and SGC. */
   DATA **pdata[2] = {NULL, NULL};
   DATA_CHUNK **pchunk[2] = {NULL, NULL};
-  const double ra_shift[2] = {60, 60};
+  const double ra_shift[2] = {DESI_NGC_RA_SHIFT, DESI_SGC_RA_SHIFT};
   bool is_ngc[2] = {false, false};
 
   for (int i = 0; i < conf->ncap; i++) {
