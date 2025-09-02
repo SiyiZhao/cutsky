@@ -37,7 +37,7 @@ IFILE=$1
 RES=$2          # 7 for DESI
 
 # Mangle package available at https://space.mit.edu/~molly/mangle/download/
-MANGLE_BIN=$HOME/mangle2.2/bin
+MANGLE_BIN=$HOME/lib/mangle2.2/bin
 
 "$MANGLE_BIN"/pixelize -vn -p+40 -Ps0,${RES} -ic1d -opd "$IFILE" "${IFILE}.pix${RES}.ply" || exit
 

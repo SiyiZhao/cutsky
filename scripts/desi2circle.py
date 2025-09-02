@@ -33,10 +33,10 @@ from astropy.table import Table
 from desimodel.focalplane import get_tile_radius_deg    # 1.628032452048558287316382120479829609394
 import sys
 
-samples = ['Y5', 'Y1_dark', 'Y1_bright']
+samples = ['Y5', 'Y3_dark', 'Y3_bright']
 ftiles = ['/global/cfs/cdirs/desi/survey/ops/surveyops/trunk/ops/tiles-main.ecsv',
-       '/global/cfs/cdirs/desi/survey/catalogs/Y1/LSS/tiles-DARK.fits',
-       '/global/cfs/cdirs/desi/survey/catalogs/Y1/LSS/tiles-BRIGHT.fits']
+       '/global/cfs/cdirs/desi/survey/catalogs/Y3/LSS/tiles-DARK.fits',
+       '/global/cfs/cdirs/desi/survey/catalogs/Y3/LSS/tiles-BRIGHT.fits']
 
 if len(sys.argv) != 2:
   print(f'Usage: {sys.argv[0]} SAMPLE')
@@ -55,7 +55,7 @@ if idx == 0:
   sel = (tiles['PROGRAM'] != 'BACKUP') & tiles['IN_DESI'] & (tiles['DEC'] > -18)
   tiles = tiles[sel]
 
-tiles['RADIUS'] = np.full_like(tiles, get_tile_radius_deg())
+tiles['RADIUS'] = np.full(len(tiles), get_tile_radius_deg())
 
 tiles.meta['comments'] = ['circle 0 1', 'unit d']
 
