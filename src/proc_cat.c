@@ -516,12 +516,18 @@ static int process_serial(const CONF *conf, const ZCVT *zcvt, const GEOM *geom)
 
         /* Parse the line. */
         double x, y, z, vx, vy, vz;
-        if (sscanf(line, "%lf %lf %lf %lf %lf %lf", &x, &y, &z, &vx, &vy, &vz)
-            != 6) {
-          P_ERR("failed to read data from line: %s\n", line);
-          cutsky_destroy(data[0]); cutsky_destroy(data[1]);
-          input_destroy(ifile);
-          return CUTSKY_ERR_FILE;
+        int ncol = sscanf(line, "%lf %lf %lf %lf %lf %lf",
+            &x, &y, &z, &vx, &vy, &vz);
+        if (ncol != 6) {
+          if (ncol == 3) {
+            vx = vy = vz = 0;
+          }
+          else {
+            P_ERR("failed to read data from line: %s\n", line);
+            cutsky_destroy(data[0]); cutsky_destroy(data[1]);
+            input_destroy(ifile);
+            return CUTSKY_ERR_FILE;
+          }
         }
         nbox += 1;
 
@@ -801,11 +807,17 @@ static int process_omp(const CONF *conf, const ZCVT *zcvt, const GEOM *geom) {
 
           /* Parse the line. */
           double x, y, z, vx, vy, vz;
-          if (sscanf(line, "%lf %lf %lf %lf %lf %lf", &x, &y, &z,
-              &vx, &vy, &vz) != 6) {
-            P_ERR("failed to read data from line: %s\n", line);
-            DATA_CLEAN_OMP; input_destroy(ifile);
-            exit(CUTSKY_ERR_FILE);
+          int ncol = sscanf(line, "%lf %lf %lf %lf %lf %lf",
+              &x, &y, &z, &vx, &vy, &vz);
+          if (ncol != 6) {
+            if (ncol == 3) {
+              vx = vy = vz = 0;
+            }
+            else {
+              P_ERR("failed to read data from line: %s\n", line);
+              DATA_CLEAN_OMP; input_destroy(ifile);
+              exit(CUTSKY_ERR_FILE);
+            }
           }
           pnbox += 1;
 
